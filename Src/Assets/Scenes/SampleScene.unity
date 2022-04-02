@@ -170,7 +170,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Palette: {fileID: 7561828946529820728, guid: a3869be346ec3d94b954b9c13aa7c5fe, type: 3}
-  Seed: 43
+  ZombieTemplate: {fileID: 2164720114482951904, guid: ba48382f6c137fb449fead94024a8a67, type: 3}
+  Seed: 137
 --- !u!483693784 &250077087
 TilemapRenderer:
   m_ObjectHideFlags: 0
@@ -446,7 +447,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 18
+  orthographic size: 12
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

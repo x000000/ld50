@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Object = UnityEngine.Object;
 using Random = Unity.Mathematics.Random;
 
 namespace com.x0
@@ -12,22 +13,30 @@ namespace com.x0
     [RequireComponent(typeof(Tilemap))]
     public class MazeGenerator : MonoBehaviour
     {
-        private const int Width  = 33;
-        private const int Height = 33;
+        private const int Width  = 21;
+        private const int Height = 21;
+        private static readonly int DirectionParam = Animator.StringToHash("Direction");
+        private static readonly Vector3 VisualOffset = new(Width / 2 - .5f, Height / 2 - .5f);
         private static readonly Vector2Int[] Directions = {
-            new(-1,  0),
-            new( 1,  0),
-            new( 0, -1),
             new( 0,  1),
+            new(-1,  0),
+            new( 0, -1),
+            new( 1,  0),
         };
 
         public Grid Palette;
+        public Object ZombieTemplate;
 
         private Tilemap _tilemap;
         private Dictionary<Tile, TileBase> _palette;
         private Random _rand;
         private Cell[,] _cells;
+        private SpawnCell[] _spawnCells;
         private bool _dirty;
+        private float _startTime;
+        private float _lastTime;
+
+        private LinkedList<Zombie> _zombies = new();
 
         [Range(1, 256)]
         public uint Seed;
@@ -35,8 +44,8 @@ namespace com.x0
         private void OnValidate()
         {
             if (Application.isPlaying && _tilemap != null) {
-                _rand  = new Random(Seed);
-                _cells = Generate();
+                _rand = new Random(Seed);
+                Generate();
                 _dirty = true;
             }
         }
@@ -63,6 +72,7 @@ namespace com.x0
         private void Start()
         {
             OnValidate();
+            _lastTime = _startTime = Time.fixedTime;
         }
 
         private void Update()
@@ -71,9 +81,65 @@ namespace com.x0
                 _dirty = false;
                 Render();
             }
+
+            var dt = Time.deltaTime;
+            var node = _zombies.First;
+            while (node != null) {
+                var zombie = node.Value;
+                var next = node.Next;
+                var newPos = zombie.Transform.position + zombie.Direction * dt * .4f * zombie.Speed;
+
+                if ((newPos - zombie.Target).sqrMagnitude < .0001f) {
+                    var cellPos = newPos + VisualOffset;
+                    var x = (int) Math.Round(cellPos.x); 
+                    var y = (int) Math.Round(cellPos.y);
+                    var cell = _cells[x, y];
+                    
+                    // Debug.Log($"({x}, {y}) {cell.Type}: {cell.Direction}");
+                    newPos = new Vector3(Mathf.Ceil(newPos.x) - .5f, Mathf.Ceil(newPos.y) - .5f);
+                    var dir = new Vector3(cell.Direction.x, cell.Direction.y);
+                    if (zombie.Direction != dir) {
+                        zombie.Animator.SetInteger(DirectionParam, Array.IndexOf(Directions, cell.Direction));
+                        zombie.Direction = dir;
+                    }
+                    zombie.Target = newPos + zombie.Direction;
+                    node.Value = zombie;
+                }
+
+                zombie.Transform.position = newPos;
+                node = next;
+            }
         }
 
-        private Cell[,] Generate()
+        private void FixedUpdate()
+        {
+            var t = Time.fixedTime;
+            if (t - _lastTime > 1) {
+                var count = Mathf.Pow(t - _startTime, 2) * .002f;
+                for (int i = 0, num = _spawnCells.Length; i < count; i++) {
+                    var zombie = (GameObject) Instantiate(ZombieTemplate);
+                    var tr = zombie.transform;
+                    var spawn = _spawnCells[_rand.NextInt(num)];
+                    var target = new Vector3(spawn.Location.x, spawn.Location.y) - VisualOffset;
+                    tr.position = target;
+                    
+                    var anim = zombie.GetComponent<Animator>();
+                    anim.SetInteger(DirectionParam, Array.IndexOf(Directions, spawn.Direction));
+
+                    var dir = new Vector3(spawn.Direction.x, spawn.Direction.y);
+                    _zombies.AddLast(new Zombie {
+                        Animator  = anim,
+                        Transform = tr,
+                        Direction = dir,
+                        Target    = target + dir,
+                        Speed     = _rand.NextFloat(.8f, 1.2f),
+                    });
+                }
+                _lastTime = t;
+            }
+        }
+
+        private void Generate()
         {
             _ = _rand.NextInt();
             
@@ -88,12 +154,14 @@ namespace com.x0
                 _ => new Vector2Int(Width / 2 + offset, Height / 2 + _rand.NextInt(-2, 3)),
             };
             
-            return Generate(pos, num);
+            _cells = Generate(pos, num, out _spawnCells);
         }
         
-        private Cell[,] Generate(Vector2Int from, int num)
+        private Cell[,] Generate(Vector2Int from, int num, out SpawnCell[] spawnCells)
         {
             var cells = new Cell[Width, Height];
+            spawnCells = new SpawnCell[num];
+            
             var forbiddenEdges = (x: -1, y: -1);
             if (from.x is 0 or Width - 1) {
                 forbiddenEdges.x = from.x;
@@ -169,6 +237,8 @@ namespace com.x0
                             }
                             
                             cells[nextCell.x, nextCell.y].Distance = current.Distance + 1;
+                            cells[nextCell.x, nextCell.y].Direction = -dir;
+                            
                             if (xMax < nextCell.x) {
                                 xMax = nextCell.x;
                             }
@@ -185,6 +255,10 @@ namespace com.x0
                             if (IsSpawnCell(forbiddenEdges.x, nextCell.x, Width)) {
                                 lockX = true;
                                 cells[nextCell.x, nextCell.y].Type = CellFlag.Spawn;
+                                spawnCells[i] = new SpawnCell {
+                                    Location  = nextCell + dir,
+                                    Direction = -dir,
+                                };
                                 n = threshHold;
                                 break;
                             }
@@ -192,6 +266,10 @@ namespace com.x0
                             if (IsSpawnCell(forbiddenEdges.y, nextCell.y, Height)) {
                                 lockY = true;
                                 cells[nextCell.x, nextCell.y].Type = CellFlag.Spawn;
+                                spawnCells[i] = new SpawnCell {
+                                    Location  = nextCell + dir,
+                                    Direction = -dir,
+                                };
                                 n = threshHold;
                                 break;
                             }
@@ -207,7 +285,7 @@ namespace com.x0
                     if (!nextFound) {
                         // Debug.LogWarning($"{cursor}: no path found");
                         // return cells;
-                        return Generate(from, num);
+                        return Generate(from, num, out spawnCells);
                     }
                 }
             }
@@ -237,6 +315,10 @@ namespace com.x0
                 for (int x = xMin; x <= xMax; x++) {
                     result[x - offsetX, y - offsetY] = cells[x, y];
                 }
+            }
+
+            for (int i = 0; i < spawnCells.Length; i++) {
+                spawnCells[i].Location -= new Vector2Int(offsetX, offsetY);
             }
             
             return AddObstacles(result, _rand.NextFloat());
@@ -359,6 +441,22 @@ namespace com.x0
         {
             public CellFlag Type;
             public int Distance;
+            public Vector2Int Direction;
+        }
+        
+        private struct SpawnCell
+        {
+            public Vector2Int Location;
+            public Vector2Int Direction;
+        }
+        
+        private struct Zombie
+        {
+            public Animator Animator;
+            public Transform Transform;
+            public Vector3 Direction;
+            public Vector3 Target;
+            public float Speed;
         }
 
         private enum CellFlag : byte
