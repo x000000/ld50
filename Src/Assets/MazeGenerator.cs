@@ -4,7 +4,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 using Random = Unity.Mathematics.Random;
 
@@ -24,8 +26,22 @@ namespace com.x0
             new( 1,  0),
         };
 
+        public Camera Camera;
+        public PlayerInput PlayerInput;
+        
         public Grid Palette;
         public Object ZombieTemplate;
+        
+        public Button GunTowerButton;
+        public Button AoeTowerButton;
+        public Button SlowTowerButton;
+        public Button CancelButton;
+        
+        public Object GunTowerTemplate;
+        public Object AoeTowerTemplate;
+        public Object SlowTowerTemplate;
+
+        private Button[] ActionButtons => new[] { GunTowerButton, AoeTowerButton, SlowTowerButton };
 
         private Tilemap _tilemap;
         private Dictionary<Tile, TileBase> _palette;
@@ -36,10 +52,15 @@ namespace com.x0
         private float _startTime;
         private float _lastTime;
 
-        private LinkedList<Zombie> _zombies = new();
+        private PlacementContext _placementCtx;
+        private InputAction _pointAction;
+        private InputAction _clickAction;
+
+        private readonly LinkedList<Zombie> _zombies = new();
 
         [Range(1, 256)]
         public uint Seed;
+
 
         private void OnValidate()
         {
@@ -69,10 +90,21 @@ namespace com.x0
             }
         }
 
+        private void OnEnable()
+        {
+            _pointAction = PlayerInput.actions["Point"];
+            _clickAction = PlayerInput.actions["Click"];
+        }
+
         private void Start()
         {
             OnValidate();
             _lastTime = _startTime = Time.fixedTime;
+            
+            GunTowerButton.onClick.AddListener(() => PlaceTower(GunTowerTemplate));
+            AoeTowerButton.onClick.AddListener(() => PlaceTower(AoeTowerTemplate));
+            SlowTowerButton.onClick.AddListener(() => PlaceTower(SlowTowerTemplate));
+            CancelButton.onClick.AddListener(CancelPlacement);
         }
 
         private void Update()
@@ -108,6 +140,15 @@ namespace com.x0
 
                 zombie.Transform.position = newPos;
                 node = next;
+            }
+
+            if (_placementCtx != null) {
+                var cell = ScreenToCell(_pointAction.ReadValue<Vector2>());
+                _placementCtx.OnMove?.Invoke(cell);
+                
+                if (_clickAction.WasPerformedThisFrame()) {
+                    _placementCtx.OnSelect?.Invoke(cell);
+                }
             }
         }
 
@@ -373,6 +414,19 @@ namespace com.x0
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Vector3Int ScreenToCell(Vector2 screenPos)
+        {
+            var worldPos = Camera.ScreenToWorldPoint(screenPos);
+            return _tilemap.WorldToCell(worldPos) - _tilemap.origin;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Vector3 CellToWorld(Vector3Int cellPos)
+        {
+            return _tilemap.CellToWorld(cellPos) + _tilemap.origin + _tilemap.cellSize / 2;
+        }
+        
         private TileBase GetGroundTile(int x, int y)
         {
             return _rand.NextInt(100) < 70 ? _palette[Tile.Ground_1] : _palette[Tile.Ground_2];
@@ -386,10 +440,10 @@ namespace com.x0
         private TileBase GetPathTile(int x, int y, int w, int h)
         {
             var d = (
-                t: y >= h - 1 ? CountAdjacentPaths(x, y, _cells, w, h) <= 1 : IsPath(x, y + 1, _cells),
-                l: x <= 0     ? CountAdjacentPaths(x, y, _cells, w, h) <= 1 : IsPath(x - 1, y, _cells),
-                b: y <= 0     ? CountAdjacentPaths(x, y, _cells, w, h) <= 1 : IsPath(x, y - 1, _cells),
-                r: x >= w - 1 ? CountAdjacentPaths(x, y, _cells, w, h) <= 1 : IsPath(x + 1, y, _cells)
+                t: y >= h - 1 ? CountAdjacentPaths(x, y, w, h) <= 1 : IsPath(x, y + 1),
+                l: x <= 0     ? CountAdjacentPaths(x, y, w, h) <= 1 : IsPath(x - 1, y),
+                b: y <= 0     ? CountAdjacentPaths(x, y, w, h) <= 1 : IsPath(x, y - 1),
+                r: x >= w - 1 ? CountAdjacentPaths(x, y, w, h) <= 1 : IsPath(x + 1, y)
             );
             return d switch {
                 (true, false, true, false) => _palette[Tile.Path_V],
@@ -420,28 +474,87 @@ namespace com.x0
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsPath(int x, int y, Cell[,] cells)
+        private bool IsPath(int x, int y)
         {
-            return cells[x, y].Type is CellFlag.Path or CellFlag.Base or CellFlag.Spawn;
+            return _cells[x, y].Type is CellFlag.Path or CellFlag.Base or CellFlag.Spawn;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CountAdjacentPaths(int x, int y, Cell[,] cells, int w, int h)
+        private bool IsFree(int x, int y)
+        {
+            var cell = _cells[x, y];
+            return cell.Type is CellFlag.Ground && cell.Placement == null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int CountAdjacentPaths(int x, int y, int w, int h)
         {
             var count = 0;
-            if (IsInBounds(x - 1, y, w, h) && IsPath(x - 1, y, cells)) count++;
-            if (IsInBounds(x + 1, y, w, h) && IsPath(x + 1, y, cells)) count++;
-            if (IsInBounds(x, y - 1, w, h) && IsPath(x, y - 1, cells)) count++;
-            if (IsInBounds(x, y + 1, w, h) && IsPath(x, y + 1, cells)) count++;
+            if (IsInBounds(x - 1, y, w, h) && IsPath(x - 1, y)) count++;
+            if (IsInBounds(x + 1, y, w, h) && IsPath(x + 1, y)) count++;
+            if (IsInBounds(x, y - 1, w, h) && IsPath(x, y - 1)) count++;
+            if (IsInBounds(x, y + 1, w, h) && IsPath(x, y + 1)) count++;
             return count;
         }
 
+        private void ToggleButtons(bool activateActions)
+        {
+            CancelButton.gameObject.SetActive(!activateActions);
+            foreach (var button in ActionButtons) {
+                button.gameObject.SetActive(activateActions);
+            }
+        }
+        
+        private void CancelPlacement()
+        {
+            if (_placementCtx != null) {
+                Destroy(_placementCtx.Target);
+                _placementCtx = null;
+            }
+            ToggleButtons(true);
+        }
+
+        private void PlaceTower(Object towerTemplate)
+        {
+            var tower = (GameObject) Instantiate(towerTemplate);
+            tower.SetActive(false);
+
+            _placementCtx = new PlacementContext {
+                Target = tower,
+                OnMove = pos => {
+                    if (IsInBounds(pos.x, pos.y, Width, Height) && IsFree(pos.x, pos.y)) {
+                        tower.transform.position = CellToWorld(pos);
+                        tower.SetActive(true);
+                    } else {
+                        tower.SetActive(false);
+                    }
+                },
+                OnSelect = pos => {
+                    if (IsInBounds(pos.x, pos.y, Width, Height) && IsFree(pos.x, pos.y)) {
+                        _placementCtx = null;
+                        ToggleButtons(true);
+                        tower.transform.position = CellToWorld(pos);
+                        tower.SetActive(true);
+                    }
+                },
+            };
+            ToggleButtons(false);
+        }
+
+        
+        private class PlacementContext
+        {
+            public GameObject Target;
+            public Action<Vector3Int> OnMove;
+            public Action<Vector3Int> OnSelect;
+        }
 
         private struct Cell
         {
             public CellFlag Type;
             public int Distance;
             public Vector2Int Direction;
+            public GameObject Placement;
         }
         
         private struct SpawnCell
