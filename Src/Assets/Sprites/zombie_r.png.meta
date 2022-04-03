@@ -47,7 +47,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 128
+  spritePixelsToUnits: 80
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -119,12 +119,12 @@ TextureImporter:
       name: zombie_r_0
       rect:
         serializedVersion: 2
-        x: 1
-        y: 137
-        width: 51
-        height: 58
+        x: 7
+        y: 133
+        width: 43
+        height: 66
       alignment: 9
-      pivot: {x: 0.3383013, y: 0.081348814}
+      pivot: {x: 0.30650446, y: 0.06477587}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -140,12 +140,12 @@ TextureImporter:
       name: zombie_r_1
       rect:
         serializedVersion: 2
-        x: 56
-        y: 138
-        width: 45
-        height: 58
+        x: 52
+        y: 133
+        width: 46
+        height: 66
       alignment: 9
-      pivot: {x: 0.37273696, y: 0.06555071}
+      pivot: {x: 0.3905706, y: 0.069693826}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -162,9 +162,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 104
-        y: 138
+        y: 133
         width: 49
-        height: 56
+        height: 66
       alignment: 9
       pivot: {x: 0.30832624, y: 0.08275931}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -183,9 +183,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 156
-        y: 137
+        y: 132
         width: 44
-        height: 58
+        height: 67
       alignment: 9
       pivot: {x: 0.3073696, y: 0.10109658}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,36 +200,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: zombie_r_4
-      rect:
-        serializedVersion: 2
-        x: 204
-        y: 137
-        width: 48
-        height: 58
-      alignment: 9
-      pivot: {x: 0.37114492, y: 0.08529795}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: abd9edb6c8c385b48b78ca570b3cfd0c
-      internalID: -1971005066
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: zombie_r_5
       rect:
         serializedVersion: 2
-        x: 6
-        y: 68
-        width: 24
-        height: 61
+        x: 11
+        y: 67
+        width: 23
+        height: 63
       alignment: 9
-      pivot: {x: 0.6350457, y: 0.05975792}
+      pivot: {x: 0.49237418, y: 0.08146062}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -245,12 +224,12 @@ TextureImporter:
       name: zombie_r_6
       rect:
         serializedVersion: 2
-        x: 51
-        y: 73
-        width: 29
-        height: 58
+        x: 58
+        y: 67
+        width: 23
+        height: 65
       alignment: 9
-      pivot: {x: 0.587813, y: 0.08488464}
+      pivot: {x: 0.51647717, y: 0.07647071}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -266,12 +245,12 @@ TextureImporter:
       name: zombie_r_7
       rect:
         serializedVersion: 2
-        x: 104
-        y: 71
-        width: 30
-        height: 56
+        x: 109
+        y: 67
+        width: 24
+        height: 63
       alignment: 9
-      pivot: {x: 0.50000024, y: 0.07832718}
+      pivot: {x: 0.5341819, y: 0.0913488}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -287,12 +266,12 @@ TextureImporter:
       name: zombie_r_8
       rect:
         serializedVersion: 2
-        x: 13
-        y: 3
-        width: 26
-        height: 60
+        x: 11
+        y: 2
+        width: 30
+        height: 64
       alignment: 9
-      pivot: {x: 0.491096, y: 0.12187247}
+      pivot: {x: 0.50932604, y: 0.07914545}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -308,12 +287,12 @@ TextureImporter:
       name: zombie_r_9
       rect:
         serializedVersion: 2
-        x: 56
-        y: 3
-        width: 28
-        height: 59
+        x: 54
+        y: 2
+        width: 29
+        height: 63
       alignment: 9
-      pivot: {x: 0.52480423, y: 0.10369215}
+      pivot: {x: 0.58138067, y: 0.090670735}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -329,12 +308,12 @@ TextureImporter:
       name: zombie_r_10
       rect:
         serializedVersion: 2
-        x: 108
-        y: 4
-        width: 27
-        height: 59
+        x: 112
+        y: 2
+        width: 29
+        height: 63
       alignment: 9
-      pivot: {x: 0.6286149, y: 0.07622521}
+      pivot: {x: 0.48717314, y: 0.07622519}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
