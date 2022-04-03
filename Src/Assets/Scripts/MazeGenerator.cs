@@ -94,6 +94,26 @@ namespace com.x0
         {
             _pointAction = PlayerInput.actions["Point"];
             _clickAction = PlayerInput.actions["Click"];
+            SlowTower.Affected += OnEnemySlowChanged;
+        }
+
+        private void OnDisable()
+        {
+            SlowTower.Affected -= OnEnemySlowChanged;
+            SlowTower.Flush();
+        }
+
+        private void OnEnemySlowChanged(object sender, bool slowed)
+        {
+            var tr = (Transform) sender;
+            for (var node = _zombies.First; node != null; node = node.Next) {
+                if (node.Value.Transform == tr) {
+                    var value = node.Value;
+                    value.SpeedMul = slowed ? .6f : 1f;
+                    node.Value = value;
+                    return;
+                }
+            }
         }
 
         private void Start()
@@ -115,11 +135,9 @@ namespace com.x0
             }
 
             var dt = Time.deltaTime;
-            var node = _zombies.First;
-            while (node != null) {
+            for (var node = _zombies.First; node != null; node = node.Next) {
                 var zombie = node.Value;
-                var next = node.Next;
-                var newPos = zombie.Transform.position + zombie.Direction * dt * .4f * zombie.Speed;
+                var newPos = zombie.Transform.position + zombie.Direction * dt * .4f * zombie.Speed * zombie.SpeedMul;
 
                 if ((newPos - zombie.Target).sqrMagnitude < .0001f) {
                     var cellPos = newPos + VisualOffset;
@@ -139,7 +157,6 @@ namespace com.x0
                 }
 
                 zombie.Transform.position = newPos;
-                node = next;
             }
 
             if (_placementCtx != null) {
@@ -156,7 +173,7 @@ namespace com.x0
         {
             var t = Time.fixedTime;
             if (t - _lastTime > 1) {
-                var count = Mathf.Pow(t - _startTime, 2) * .002f;
+                var count = Mathf.Pow(t - _startTime, 2) * .0002f;
                 for (int i = 0, num = _spawnCells.Length; i < count; i++) {
                     var zombie = (GameObject) Instantiate(ZombieTemplate);
                     var tr = zombie.transform;
@@ -168,13 +185,15 @@ namespace com.x0
                     anim.SetInteger(DirectionParam, Array.IndexOf(Directions, spawn.Direction));
 
                     var dir = new Vector3(spawn.Direction.x, spawn.Direction.y);
-                    _zombies.AddLast(new Zombie {
+                    var node = _zombies.AddLast(new Zombie {
                         Animator  = anim,
                         Transform = tr,
                         Direction = dir,
                         Target    = target + dir,
                         Speed     = _rand.NextFloat(.8f, 1.2f),
+                        SpeedMul  = 1.0f,
                     });
+                    zombie.GetComponent<IEnemy>().Dies += _ => _zombies.Remove(node);
                 }
                 _lastTime = t;
             }
@@ -531,9 +550,10 @@ namespace com.x0
                 },
                 OnSelect = pos => {
                     if (IsInBounds(pos.x, pos.y, Width, Height) && IsFree(pos.x, pos.y)) {
-                        _placementCtx = null;
+                        _placementCtx = null;   
                         ToggleButtons(true);
                         tower.transform.position = CellToWorld(pos);
+                        tower.GetComponent<TowerBase>().enabled = true;
                         tower.SetActive(true);
                     }
                 },
@@ -570,6 +590,7 @@ namespace com.x0
             public Vector3 Direction;
             public Vector3 Target;
             public float Speed;
+            public float SpeedMul;
         }
 
         private enum CellFlag : byte
