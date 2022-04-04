@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,6 +16,8 @@ namespace com.x0
     [RequireComponent(typeof(Tilemap))]
     public class MazeGenerator : MonoBehaviour
     {
+        private const int EnemyPrice = 1;
+        private const int TowerCost  = 10;
         private const int Width  = 21;
         private const int Height = 21;
         private static readonly int DirectionParam = Animator.StringToHash("Direction");
@@ -28,6 +31,7 @@ namespace com.x0
 
         public Camera Camera;
         public PlayerInput PlayerInput;
+        public TMP_Text MoneyLabel;
         
         public Grid Palette;
         public Object ZombieTemplate;
@@ -51,6 +55,7 @@ namespace com.x0
         private bool _dirty;
         private float _startTime;
         private float _lastTime;
+        private int _money;
 
         private PlacementContext _placementCtx;
         private InputAction _pointAction;
@@ -125,6 +130,8 @@ namespace com.x0
             AoeTowerButton.onClick.AddListener(() => PlaceTower(AoeTowerTemplate));
             SlowTowerButton.onClick.AddListener(() => PlaceTower(SlowTowerTemplate));
             CancelButton.onClick.AddListener(CancelPlacement);
+            
+            UpdateMoney(TowerCost * 2);
         }
 
         private void Update()
@@ -193,7 +200,10 @@ namespace com.x0
                         Speed     = _rand.NextFloat(.8f, 1.2f),
                         SpeedMul  = 1.0f,
                     });
-                    zombie.GetComponent<IEnemy>().Dies += _ => _zombies.Remove(node);
+                    zombie.GetComponent<IEnemy>().Dies += _ => {
+                        UpdateMoney(_money + EnemyPrice);
+                        _zombies.Remove(node);
+                    };
                 }
                 _lastTime = t;
             }
@@ -530,6 +540,19 @@ namespace com.x0
             return count;
         }
 
+        private void UpdateMoney(int newMoney)
+        {
+            MoneyLabel.text = "$" + newMoney;
+
+            if ((_money >= TowerCost) != (newMoney >= TowerCost)) {
+                foreach (var button in ActionButtons) {
+                    button.interactable = newMoney >= TowerCost;
+                }
+            }
+
+            _money = newMoney;
+        }
+
         private void ToggleButtons(bool activateActions)
         {
             CancelButton.gameObject.SetActive(!activateActions);
@@ -564,7 +587,8 @@ namespace com.x0
                 },
                 OnSelect = pos => {
                     if (IsInBounds(pos.x, pos.y, Width, Height) && IsFree(pos.x, pos.y)) {
-                        _placementCtx = null;   
+                        _placementCtx = null;
+                        UpdateMoney(_money - TowerCost);   
                         ToggleButtons(true);
                         tower.transform.position = CellToWorld(pos);
                         tower.GetComponent<TowerBase>().enabled = true;

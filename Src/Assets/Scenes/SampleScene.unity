@@ -161,7 +161,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: -540, y: -360}
-  m_SizeDelta: {x: 200, y: 60}
+  m_SizeDelta: {x: 270, y: 60}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &231965157
 MonoBehaviour:
@@ -294,6 +294,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Camera: {fileID: 519420031}
   PlayerInput: {fileID: 250077089}
+  MoneyLabel: {fileID: 2052415597}
   Palette: {fileID: 7561828946529820728, guid: a3869be346ec3d94b954b9c13aa7c5fe, type: 3}
   ZombieTemplate: {fileID: 2164720114482951904, guid: ba48382f6c137fb449fead94024a8a67, type: 3}
   GunTowerButton: {fileID: 1278488786}
@@ -346,7 +347,7 @@ TilemapRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
-  m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
+  m_ChunkCullingBounds: {x: 0, y: 0.3828125, z: 0}
   m_MaxChunkCount: 16
   m_MaxFrameAge: 16
   m_SortOrder: 0
@@ -1412,7 +1413,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: -540, y: -200}
-  m_SizeDelta: {x: 200, y: 60}
+  m_SizeDelta: {x: 270, y: 60}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &1278488786
 MonoBehaviour:
@@ -1554,7 +1555,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: AoE tower
+  m_text: Explosive tower
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1689,7 +1690,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Attack tower
+  m_text: 'Shooting tower
 
 '
   m_isRightToLeft: 0
@@ -2016,7 +2017,7 @@ GameObject:
   - component: {fileID: 2052415598}
   - component: {fileID: 2052415597}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Money
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2177,7 +2178,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: -540, y: -280}
-  m_SizeDelta: {x: 200, y: 60}
+  m_SizeDelta: {x: 270, y: 60}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &2102979079
 MonoBehaviour:
