@@ -16,6 +16,7 @@ namespace com.x0
     [RequireComponent(typeof(Tilemap))]
     public class MazeGenerator : MonoBehaviour
     {
+        private const float ZombieSpeed = .4f;
         private const int EnemyPrice = 1;
         private const int TowerCost  = 10;
         private const int Width  = 21;
@@ -32,6 +33,7 @@ namespace com.x0
         public Camera Camera;
         public PlayerInput PlayerInput;
         public TMP_Text MoneyLabel;
+        public GameObject WastedScreen;
         
         public Grid Palette;
         public Object ZombieTemplate;
@@ -52,10 +54,12 @@ namespace com.x0
         private Random _rand;
         private Cell[,] _cells;
         private SpawnCell[] _spawnCells;
+        private Rect _baseRect;
         private bool _dirty;
         private float _startTime;
         private float _lastTime;
         private int _money;
+        private bool _dead;
 
         private PlacementContext _placementCtx;
         private InputAction _pointAction;
@@ -136,6 +140,10 @@ namespace com.x0
 
         private void Update()
         {
+            if (_dead) {
+                return;
+            }
+            
             if (_dirty) {
                 _dirty = false;
                 Render();
@@ -144,7 +152,7 @@ namespace com.x0
             var dt = Time.deltaTime;
             for (var node = _zombies.First; node != null; node = node.Next) {
                 var zombie = node.Value;
-                var newPos = zombie.Transform.position + zombie.Direction * dt * .4f * zombie.Speed * zombie.SpeedMul;
+                var newPos = zombie.Transform.position + zombie.Direction * dt * ZombieSpeed * zombie.Speed * zombie.SpeedMul;
 
                 if ((newPos - zombie.Target).sqrMagnitude < .0001f) {
                     var cellPos = newPos + VisualOffset;
@@ -164,6 +172,13 @@ namespace com.x0
                 }
 
                 zombie.Transform.position = newPos;
+
+                if (_baseRect.Contains(newPos)) {
+                    _dead = true;
+                    CancelPlacement();
+                    WastedScreen.SetActive(true);
+                    return;
+                }
             }
 
             if (_placementCtx != null) {
@@ -178,6 +193,10 @@ namespace com.x0
 
         private void FixedUpdate()
         {
+            if (_dead) {
+                return;
+            }
+            
             var t = Time.fixedTime;
             if (t - _lastTime > 1) {
                 var count = Mathf.Pow(t - _startTime, 2) * .0002f;
@@ -216,7 +235,7 @@ namespace com.x0
             var edge = _rand.NextInt(0, 5);
             var num = edge == 0 ? _rand.NextInt(3, 5) : _rand.NextInt(2, 4);
             var offset = _rand.NextInt(-2, 3);
-            var pos = edge switch {
+            var basePos = edge switch {
                 1 => new Vector2Int(Width / 2 + offset, Height - 1),
                 2 => new Vector2Int(                 0, Height / 2 + offset),
                 3 => new Vector2Int(Width / 2 + offset, 0),
@@ -224,7 +243,10 @@ namespace com.x0
                 _ => new Vector2Int(Width / 2 + offset, Height / 2 + _rand.NextInt(-2, 3)),
             };
             
-            _cells = Generate(pos, num, out _spawnCells);
+            _cells = Generate(basePos, num, out _spawnCells);
+            
+            var worldPos = _tilemap.CellToWorld((Vector3Int) basePos - new Vector3Int(Width / 2, Height / 2));
+            _baseRect = new Rect(worldPos, _tilemap.cellSize);
         }
         
         private Cell[,] Generate(Vector2Int from, int num, out SpawnCell[] spawnCells)
