@@ -18,8 +18,8 @@ namespace com.x0
     public class MazeGenerator : MonoBehaviour
     {
         private const float ZombieSpeed = .6f;
+        private const float TowerCostMultiplier = 1.25f;
         private const int EnemyPrice = 1;
-        private const int TowerCost  = 10;
         private const int Width  = 21;
         private const int Height = 21;
         private static readonly int DirectionParam = Animator.StringToHash("Direction");
@@ -34,6 +34,7 @@ namespace com.x0
         public Camera Camera;
         public PlayerInput PlayerInput;
         public TMP_Text MoneyLabel;
+        public TMP_Text TowerCostLabel;
         public GameObject WastedScreen;
         
         public Grid Palette;
@@ -50,6 +51,7 @@ namespace com.x0
 
         private Button[] ActionButtons => new[] { GunTowerButton, AoeTowerButton, SlowTowerButton };
 
+        private int _towerCost = 10;
         private Tilemap _tilemap;
         private Dictionary<Tile, TileBase> _palette;
         private Random _rand;
@@ -151,8 +153,9 @@ namespace com.x0
             AoeTowerButton.onClick.AddListener(() => PlaceTower(AoeTowerTemplate));
             SlowTowerButton.onClick.AddListener(() => PlaceTower(SlowTowerTemplate));
             CancelButton.onClick.AddListener(CancelPlacement);
-            
-            UpdateMoney(TowerCost * 2);
+
+            TowerCostLabel.text = "$" + _towerCost;
+            UpdateMoney((int) (_towerCost + _towerCost * TowerCostMultiplier));
         }
 
         private void Update()
@@ -587,9 +590,9 @@ namespace com.x0
         {
             MoneyLabel.text = "$" + newMoney;
 
-            if ((_money >= TowerCost) != (newMoney >= TowerCost)) {
+            if ((_money >= _towerCost) != (newMoney >= _towerCost)) {
                 foreach (var button in ActionButtons) {
-                    button.interactable = newMoney >= TowerCost;
+                    button.interactable = newMoney >= _towerCost;
                 }
             }
 
@@ -631,12 +634,14 @@ namespace com.x0
                 OnSelect = pos => {
                     if (IsInBounds(pos.x, pos.y, Width, Height) && IsFree(pos.x, pos.y)) {
                         _placementCtx = null;
-                        UpdateMoney(_money - TowerCost);   
+                        UpdateMoney(_money - _towerCost);   
                         ToggleButtons(true);
                         tower.transform.position = CellToWorld(pos);
                         tower.GetComponent<TowerBase>().enabled = true;
                         tower.SetActive(true);
                         _cells[pos.x, pos.y].Placement = tower;
+                        _towerCost = (int) (_towerCost * TowerCostMultiplier);
+                        TowerCostLabel.text = "$" + _towerCost;
                     }
                 },
             };
