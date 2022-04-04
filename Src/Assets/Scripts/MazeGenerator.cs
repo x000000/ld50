@@ -17,7 +17,7 @@ namespace com.x0
     [RequireComponent(typeof(Tilemap))]
     public class MazeGenerator : MonoBehaviour
     {
-        private const float ZombieSpeed = .4f;
+        private const float ZombieSpeed = .6f;
         private const int EnemyPrice = 1;
         private const int TowerCost  = 10;
         private const int Width  = 21;
