@@ -6,6 +6,7 @@ using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -70,15 +71,40 @@ namespace com.x0
         [Range(1, 256)]
         public uint Seed;
 
+        public void DisposeLevel()
+        {
+            SceneManager.activeSceneChanged += OnSceneChanged;
+            SceneManager.LoadScene(0);
+        }
 
+        private void OnSceneChanged(Scene oldScene, Scene newScene)
+        {
+            SceneManager.activeSceneChanged -= OnSceneChanged;
+            
+            foreach (var root in newScene.GetRootGameObjects()) {
+                var menu = root.GetComponentInChildren<MainMenu>();
+                if (menu != null) {
+                    menu.Input.text = Seed.ToString();
+                    break;
+                }
+            }
+        }
+
+        public void Init(uint seed)
+        {
+            _rand = new Random(Seed = seed);
+            Generate();
+            _dirty = true;
+        }
+
+#if UNITY_EDITOR
         private void OnValidate()
         {
             if (Application.isPlaying && _tilemap != null) {
-                _rand = new Random(Seed);
-                Generate();
-                _dirty = true;
+                Init(Seed);
             }
         }
+#endif
 
         private void Awake()
         {
