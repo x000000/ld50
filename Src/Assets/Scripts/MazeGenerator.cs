@@ -634,6 +634,7 @@ namespace com.x0
                         tower.transform.position = CellToWorld(pos);
                         tower.GetComponent<TowerBase>().enabled = true;
                         tower.SetActive(true);
+                        _cells[pos.x, pos.y].Placement = tower;
                     }
                 },
             };
