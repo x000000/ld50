@@ -260,13 +260,13 @@ namespace com.x0
                 _ => new Vector2Int(Width / 2 + offset, Height / 2 + _rand.NextInt(-2, 3)),
             };
             
-            _cells = Generate(basePos, num, out _spawnCells);
+            _cells = Generate(ref basePos, num, out _spawnCells);
             
             var worldPos = _tilemap.CellToWorld((Vector3Int) basePos - new Vector3Int(Width / 2, Height / 2));
             _baseRect = new Rect(worldPos, _tilemap.cellSize);
         }
         
-        private Cell[,] Generate(Vector2Int from, int num, out SpawnCell[] spawnCells)
+        private Cell[,] Generate(ref Vector2Int from, int num, out SpawnCell[] spawnCells)
         {
             var cells = new Cell[Width, Height];
             spawnCells = new SpawnCell[num];
@@ -394,7 +394,7 @@ namespace com.x0
                     if (!nextFound) {
                         // Debug.LogWarning($"{cursor}: no path found");
                         // return cells;
-                        return Generate(from, num, out spawnCells);
+                        return Generate(ref from, num, out spawnCells);
                     }
                 }
             }
@@ -429,7 +429,9 @@ namespace com.x0
             for (int i = 0; i < spawnCells.Length; i++) {
                 spawnCells[i].Location -= new Vector2Int(offsetX, offsetY);
             }
-            
+
+            from.x -= offsetX;
+            from.y -= offsetY;
             return AddObstacles(result, _rand.NextFloat());
         }
 
