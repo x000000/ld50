@@ -448,12 +448,26 @@ namespace com.x0
         
         private TileBase GetGroundTile(int x, int y)
         {
-            return _rand.NextInt(100) < 70 ? _palette[Tile.Ground_1] : _palette[Tile.Ground_2];
+            var r = _rand.NextInt(100);
+            if (r < 30) {
+                return _palette[Tile.Ground_3];
+            }
+            if (r < 60) {
+                return _palette[Tile.Ground_2];
+            }
+            return _palette[Tile.Ground_1];
         }
 
         private TileBase GetObstacleTile(int x, int y)
         {
-            return _palette[Tile.Obstacle_1];
+            var r = _rand.NextInt(100);
+            if (r < 50) {
+                return _palette[Tile.Obstacle_1];
+            }
+            if (r < 85) {
+                return _palette[Tile.Obstacle_2];
+            }
+            return _palette[Tile.Obstacle_3];
         }
 
         private TileBase GetPathTile(int x, int y, int w, int h)
@@ -606,7 +620,10 @@ namespace com.x0
         {
             Ground_1,
             Ground_2,
+            Ground_3,
             Obstacle_1,
+            Obstacle_2,
+            Obstacle_3,
             Path_H,
             Path_V,
             Path_TL,
