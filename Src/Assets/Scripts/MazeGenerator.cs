@@ -68,7 +68,6 @@ namespace com.x0
 
         private readonly LinkedList<Zombie> _zombies = new();
 
-        [Range(1, 256)]
         public uint Seed;
 
         public void DisposeLevel()
@@ -92,19 +91,11 @@ namespace com.x0
 
         public void Init(uint seed)
         {
+            Debug.Log("Level initialized with seed " + seed);
             _rand = new Random(Seed = seed);
             Generate();
             _dirty = true;
         }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (Application.isPlaying && _tilemap != null) {
-                Init(Seed);
-            }
-        }
-#endif
 
         private void Awake()
         {
@@ -153,7 +144,7 @@ namespace com.x0
 
         private void Start()
         {
-            OnValidate();
+            Init(Seed);
             _lastTime = _startTime = Time.fixedTime;
             
             GunTowerButton.onClick.AddListener(() => PlaceTower(GunTowerTemplate));
