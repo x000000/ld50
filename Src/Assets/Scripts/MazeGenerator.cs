@@ -170,13 +170,15 @@ namespace com.x0
             for (var node = _zombies.First; node != null; node = node.Next) {
                 var zombie = node.Value;
                 var newPos = zombie.Transform.position + zombie.Direction * dt * ZombieSpeed * zombie.Speed * zombie.SpeedMul;
+                var newDir = zombie.Target - newPos;
 
-                if ((newPos - zombie.Target).sqrMagnitude < .0001f) {
+                // when zombie oversteps the Target point the direction will switch sign for respective component
+                if (newDir.x < 0 != zombie.Direction.x < 0 || newDir.y < 0 != zombie.Direction.y < 0) {
                     var cellPos = newPos + VisualOffset;
-                    var x = (int) Math.Round(cellPos.x); 
+                    var x = (int) Math.Round(cellPos.x);
                     var y = (int) Math.Round(cellPos.y);
                     var cell = _cells[x, y];
-                    
+
                     // Debug.Log($"({x}, {y}) {cell.Type}: {cell.Direction}");
                     newPos = new Vector3(Mathf.Ceil(newPos.x) - .5f, Mathf.Ceil(newPos.y) - .5f);
                     var dir = new Vector3(cell.Direction.x, cell.Direction.y);
