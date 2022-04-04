@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TMPro;
@@ -35,6 +36,7 @@ namespace com.x0
         public PlayerInput PlayerInput;
         public TMP_Text MoneyLabel;
         public TMP_Text TowerCostLabel;
+        public TMP_Text TimeLabel;
         public GameObject WastedScreen;
         
         public Grid Palette;
@@ -218,8 +220,11 @@ namespace com.x0
             if (_dead) {
                 return;
             }
-            
+
             var t = Time.fixedTime;
+            var s = t - _startTime;
+            TimeLabel.text = string.Format(CultureInfo.InvariantCulture, "{0}:{1:00.00}", (int) (s / 60), s % 60);
+            
             if (t - _lastTime > 1) {
                 var count = Mathf.Pow(t - _startTime, 2) * .0002f;
                 for (int i = 0, num = _spawnCells.Length; i < count; i++) {
